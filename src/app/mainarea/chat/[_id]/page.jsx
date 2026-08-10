@@ -24,6 +24,7 @@ function chat() {
   const searchParams = useSearchParams()
   const [message, setMessage] = useState("")
   const [OptionsDiv, setOptionsDiv] = useState(null)
+  const [isOnline, setisOnline] = useState(false)
 
   const myid = session?.user?.id
 
@@ -46,6 +47,21 @@ function chat() {
   }, [])
 
   useEffect(() => {
+
+    const handleOnline = (userId)=>{
+      if(memberId == userId){
+        setisOnline(true)
+      }
+    }
+
+    const handleOffline = (userId)=>{
+      if(memberId == userId){
+        setisOnline(false)
+      }
+    }
+
+    socket.on("onlineUser", handleOnline)
+    socket.on("offlineUser", handleOffline)
 
     socket.on("receiveMessage", (message) => {
       setchatMessages((prev) => [...prev, message])
@@ -104,7 +120,10 @@ function chat() {
         <div className="flex gap-3 items-center">
           <FaAngleLeft className='block sm:hidden text-[20px] hover:cursor-pointer ' onClick={() => { router.push("/mainarea") }} />
           <img src={image} className='h-10 w-10 lg:h-10 lg:w-10 xl:h-13 xl:w-13 rounded-full' />
-          <h1 className='sm:text-[17px] lg:text-[20px] 2xl:text-[25px] font-semibold'>{name}</h1>
+          <div>
+            <h1 className='sm:text-[17px] lg:text-[20px] 2xl:text-[25px] font-semibold'>{name}</h1>
+            <p>{isOnline ? "Online" : "Offline"}</p>
+          </div>
         </div>
 
         <div className="flex gap-4 lg:gap-10 2xl:gap-10 text-[20px] items-center">
@@ -122,12 +141,12 @@ function chat() {
           {
             chatMessages?.map(mess => (
               <>
-                <div className={`relative w-full flex mt-3 ${mess?.sender == myid ? "justify-end" : "justify-start"}`}>
-                  <div className={`px-3 py-2 flex gap-3  ${mess?.sender == myid ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
+                <div className={`relative w-full flex mt-3 ${mess?.sender?._id == myid ? "justify-end" : "justify-start"}`}>
+                  <div className={`px-3 py-2 flex gap-3  ${mess?.sender?._id == myid ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
                     <p className={`text-[20px] `}>{mess?.message}</p>
-                    <div className={`items-end ${mess?.sender != (session?.user?.id) && "mt-3"}`}>
+                    <div className={`items-end ${mess?.sender?._id != (session?.user?.id) && "mt-3"}`}>
                       {
-                        mess?.sender == (session?.user?.id) ?
+                        mess?.sender?._id == (session?.user?.id) ?
                           <div className="flex justify-end"><FaAngleDown onClick={() => setOptionsDiv(
                             OptionsDiv === mess._id ? null : mess._id
                           )} /></div>

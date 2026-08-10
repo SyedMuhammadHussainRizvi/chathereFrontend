@@ -1,6 +1,7 @@
 import { connect } from "@/lib/mongodb";
 import messages from "@/models/messages";
 import { NextResponse } from "next/server";
+import User from "@/models/User";
 
 export async function GET(req, { params }) {
     try {
@@ -9,7 +10,7 @@ export async function GET(req, { params }) {
         const reqBody = await params
         const { chatId } = reqBody
 
-        const findMessages = await messages.find({ chatId })
+        const findMessages = await messages.find({ chatId }).populate("sender")
         if (!findMessages) {
             return NextResponse.json({
                 success: false,

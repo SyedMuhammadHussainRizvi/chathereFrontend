@@ -9,6 +9,7 @@ import { toast, ToastContainer } from 'react-toastify'
 import { FaUserCircle } from 'react-icons/fa'
 import { FaCross, FaUsers, FaXmark } from 'react-icons/fa6'
 import ChatsSkeleton from './ChatsSkeleton'
+import { BiLogOutCircle } from "react-icons/bi"
 
 function Chatpeople() {
 
@@ -61,7 +62,7 @@ function Chatpeople() {
             setgroupMembers([{ memId: session?.user?.id, memStatus: "creator" }])
         }
     }, [session])
-    console.log(chats)
+    
 
     const result = chats?.filter(ch => ch?.chatMembers[0]?.name?.toLowerCase()?.includes(search) || ch?.lastMessage?.message?.toLowerCase()?.includes(search))
 
@@ -136,7 +137,7 @@ function Chatpeople() {
         toast.error(response.message)
         setbtnLoader(false)
     }
-    console.log(groupMembers)
+   
     function handleSignOut() {
 
         signOut()
@@ -150,13 +151,16 @@ function Chatpeople() {
                 <div className="flex justify-between">
                     <div>
                         <h1 className='font-bold text-[25px]'>{showChatOption}</h1>
-                        <h1>{session?.user?.name}</h1>
+                        <h1 className='mt-3'>{session?.user?.name}</h1>
                     </div>
-                    <button onClick={() => { handleSignOut() }}>Logout</button>
-                    <div className="h-10 w-10 rounded-full bg-[#0B895A] text-[35px] flex items-center justify-center text-white hover:cursor-pointer"
+                    
+                    <div>
+                        <div className="h-10 w-10 rounded-full bg-[#0B895A] text-[35px] flex items-center justify-center text-white hover:cursor-pointer"
                         onClick={() => { showChatOption == "Chats" ? setaddchat(true) : setaddgroup(true) }}
                     >
                         +
+                    </div>
+                    <BiLogOutCircle className='justify-self-center text-[25px] mt-3 text-red-400 hover:cursor-pointer' onClick={() => { handleSignOut() }}/>
                     </div>
                 </div>
                 <br />
@@ -305,7 +309,7 @@ function Chatpeople() {
                                                 checked={groupMembers.find(gm => gm.memId == person?.chatMembers[0]?._id) ? true : false}
                                                 onClick={() => {
                                                     const arr = [...groupMembers]
-                                                    console.log(arr)
+                                                   
                                                     arr?.find(aa => aa.memId == person?.chatMembers[0]?._id) ? setgroupMembers(arr?.filter(a => a?.memId != person?.chatMembers[0]?._id)) :
                                                         setgroupMembers([...arr, { memId: person?.chatMembers[0]?._id, status: "user" }])
                                                 }}
