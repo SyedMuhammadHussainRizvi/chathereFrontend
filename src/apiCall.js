@@ -1,7 +1,7 @@
 const DOMAIN = "/api"
 
 export const addUser = async function(payload){
-    const response = await fetch(`${DOMAIN}/api/signup`, {
+    const response = await fetch(`${DOMAIN}/signup`, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify(payload)
