@@ -202,7 +202,7 @@ function Chatpeople() {
 
             {
                 addchat ? (
-                    <div className="inset-0 fixed flex justify-center items-center bg-black/40 backdrop-blur-[2px]">
+                    <div className="inset-0 fixed flex justify-center items-center bg-black/40 backdrop-blur-[2px] z-10">
 
 
                         <div className="h-auto w-90 md:w-120 bg-white border border-gray-200 shadow-lg rounded-lg top-0 text-center relative">
@@ -231,7 +231,7 @@ function Chatpeople() {
 
                     </div>
                 ) : addgroup && (
-                    <div className="inset-0 fixed flex justify-center items-center bg-black/40 backdrop-blur-[2px]">
+                    <div className="inset-0 fixed flex justify-center items-center bg-black/40 backdrop-blur-[2px] z-10">
 
 
                         <div className="h-auto w-90 md:w-180 bg-white border border-gray-200 shadow-lg rounded-lg top-0 relative py-5 px-5 text-[15px] lg:text-[18px] 2xl:text-[20px]">
@@ -275,7 +275,7 @@ function Chatpeople() {
                             />
                             <br /><br />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2  max-h-80 overflow-y-auto">
+                            <div className="grid grid-cols-1 md:grid-cols-2  max-h-30 overflow-y-auto">
 
                                 {
                                     chats?.map(person => (
