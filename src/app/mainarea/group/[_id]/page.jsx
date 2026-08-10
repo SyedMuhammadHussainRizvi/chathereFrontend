@@ -180,7 +180,7 @@ function group() {
                     <div className="bg-[#2E2F2F] text-white w-full h-[6vh] lg:h-full xl:h-full 2xl:h-full flex justify-between rounded-full items-center px-5 text-[25px] sm:text-[30px] lg:text-[20px] 2xl:text-[30px]">
                         <div className='flex gap-2 items-center'>
                             <BsEmojiSmile />
-                            <input type="text" className=' w-40 2xl:w-350 lg:w-170 sm:w-50 focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e) => setMessage(e.target.value)} />
+                            <input type="text" className=' flex-1 w-full focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e) => setMessage(e.target.value)} />
                         </div>
                         <div className="flex gap-5 items-center">
                             <IoMdAttach />

@@ -11,6 +11,7 @@ export default function RootLayout({
 }) {
 
   const {data: session, status} = useSession()
+  
 
   useEffect(()=>{
     if(status!== "authenticated") return

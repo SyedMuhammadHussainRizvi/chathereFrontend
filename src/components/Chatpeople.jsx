@@ -8,6 +8,7 @@ import { signOut, useSession } from 'next-auth/react'
 import { toast, ToastContainer } from 'react-toastify'
 import { FaUserCircle } from 'react-icons/fa'
 import { FaCross, FaUsers, FaXmark } from 'react-icons/fa6'
+import ChatsSkeleton from './ChatsSkeleton'
 
 function Chatpeople() {
 
@@ -16,6 +17,7 @@ function Chatpeople() {
     const [addchat, setaddchat] = useState(false)
     const [addgroup, setaddgroup] = useState(false)
     const [btnLoader, setbtnLoader] = useState(false)
+    const [loadSkeleton, setloadSkeleton] = useState(false)
     const [contact, setcontact] = useState("")
     const [chats, setchats] = useState([])
     const [groups, setgroups] = useState([])
@@ -31,7 +33,9 @@ function Chatpeople() {
     const [search, setsearch] = useState("")
 
     async function fetchChats() {
+        setloadSkeleton(true)
         const response = await getChats(session?.user?.id)
+        setloadSkeleton(false)
         if (response.success) {
             setchats(response?.findChats)
         } else {
@@ -40,7 +44,9 @@ function Chatpeople() {
     }
 
     async function fetchGroups() {
+        setloadSkeleton(true)
         const response = await getGroups(session?.user?.id)
+        setloadSkeleton(false)
         if (response.success) {
             setgroups(response?.findGroups)
         } else {
@@ -111,20 +117,22 @@ function Chatpeople() {
         setbtnLoader(true)
     }
     console.log(groupMembers)
-    function handleSignOut(){
-        
+    function handleSignOut() {
+
         signOut()
-        
+
     }
     return (
         <>
-            <div className='h-screen bg-[#161717] text-white w-full px-5 py-10'>
+            <div className='h-screen bg-[#161717] text-white w-full px-5 py-10 flex flex-col'>
                 <ToastContainer position='top-center' />
 
                 <div className="flex justify-between">
-                    <h1 className='font-bold text-[25px]'>{showChatOption}</h1>
-                    <h1>{session?.user?.name}</h1>
-                    <button onClick={()=>{handleSignOut()}}>Logout</button>
+                    <div>
+                        <h1 className='font-bold text-[25px]'>{showChatOption}</h1>
+                        <h1>{session?.user?.name}</h1>
+                    </div>
+                    <button onClick={() => { handleSignOut() }}>Logout</button>
                     <div className="h-10 w-10 rounded-full bg-[#0B895A] text-[35px] flex items-center justify-center text-white hover:cursor-pointer"
                         onClick={() => { showChatOption == "Chats" ? setaddchat(true) : setaddgroup(true) }}
                     >
@@ -143,37 +151,53 @@ function Chatpeople() {
                     <div className={`px-3 py-1 rounded-full border border-[#2E2F2F] text-[#AAABAB] hover:cursor-pointer hover:bg-[#2E2F2F] ${showChatOption == "Groups" && "bg-[#11432F] text-[#D9FDC9]"}`} onClick={() => { setshowChatOption("Groups") }}>Groups</div>
                 </div>
                 <br />
-                {
-                    showChatOption == "Chats" ? (
-                        result?.map(person => (
-                            <div className="w-full flex gap-3 items-center relative px-5 py-5 hover:bg-[#2E2F2F] rounded-2xl" onClick={() => { openChat(person?._id, person?.chatMembers[0]?.name, "/images/profile.png", person?.chatMembers[0]?._id) }}>
-                                <Image src="/images/profile.png" width={60} height={60} className='rounded-full ' alt='profilephoto' />
+                <div className="flex-1 min-h-0">
+                    <div className="h-full overflow-y-auto
+                        [&::-webkit-scrollbar]:w-1.5
+                        [&::-webkit-scrollbar-track]:bg-transparent
+                        [&::-webkit-scrollbar-thumb]:bg-[#3A3B3B]
+                        [&::-webkit-scrollbar-thumb]:rounded-full
+                        hover:[&::-webkit-scrollbar-thumb]:bg-[#555757]
+                    ">
+                        {
+                            loadSkeleton ? (
 
-                                <div className="">
-                                    <h1 className='text-[17px] font-semibold'>{person?.chatMembers[0]?.name != "" ? person?.chatMembers[0]?.name : person?.chatMembers[0]?.contactNumber}</h1>
-                                    <p className='text-[#AAABAB] text-[14px]'>{(person?.lastMessage?.sender == session?.user?.id ? "You" : "other") + ": " + person?.lastMessage?.message}</p>
-                                </div>
+                                < ChatsSkeleton />
 
-                                {/* <div className="absolute top-2 right-3 text-gray-600 text-[13px]"><p>{person?.msgtime}</p></div> */}
-                                <div className="absolute top-2 right-3 text-gray-600 text-[13px]"><p>4:25</p></div>
-                            </div>
-                        ))
-                    ) : (
-                        groups?.map(grp => (
-                            <div className="w-full flex gap-3 items-center relative px-5 py-5 hover:bg-[#2E2F2F] rounded-2xl" onClick={() => { openGroup(grp?._id)}}>
-                                <Image src="/images/profile.png" width={60} height={60} className='rounded-full ' alt='profilephoto' />
+                            ) : (
+                                showChatOption == "Chats" ? (
+                                    result?.map(person => (
+                                        <div className="w-full flex gap-3 items-center relative px-5 py-5 hover:bg-[#2E2F2F] rounded-2xl" onClick={() => { openChat(person?._id, person?.chatMembers[0]?.name, "/images/profile.png", person?.chatMembers[0]?._id) }}>
+                                            <Image src="/images/profile.png" width={60} height={60} className='rounded-full ' alt='profilephoto' />
 
-                                <div className="">
-                                    <h1 className='text-[17px] font-semibold'>{grp?.groupName}</h1>
-                                    <p className='text-[#AAABAB] text-[14px]'>{(grp?.lastMessage?.sender == session?.user?.id ? "You" : "other") + ": " + grp?.lastMessage?.message}</p>
-                                </div>
+                                            <div className="">
+                                                <h1 className='text-[17px] font-semibold'>{person?.chatMembers[0]?.name != "" ? person?.chatMembers[0]?.name : person?.chatMembers[0]?.contactNumber}</h1>
+                                                <p className='text-[#AAABAB] text-[14px]'>{(person?.lastMessage?.sender == session?.user?.id ? "You" : "other") + ": " + person?.lastMessage?.message}</p>
+                                            </div>
 
-                                {/* <div className="absolute top-2 right-3 text-gray-600 text-[13px]"><p>{person?.msgtime}</p></div> */}
-                                <div className="absolute top-2 right-3 text-gray-600 text-[13px]"><p>4:25</p></div>
-                            </div>
-                        ))
-                    )
-                }
+                                            {/* <div className="absolute top-2 right-3 text-gray-600 text-[13px]"><p>{person?.msgtime}</p></div> */}
+                                            <div className="absolute top-2 right-3 text-gray-600 text-[13px]"><p>4:25</p></div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    groups?.map(grp => (
+                                        <div className="w-full flex gap-3 items-center relative px-5 py-5 hover:bg-[#2E2F2F] rounded-2xl" onClick={() => { openGroup(grp?._id) }}>
+                                            <Image src="/images/profile.png" width={60} height={60} className='rounded-full ' alt='profilephoto' />
+
+                                            <div className="">
+                                                <h1 className='text-[17px] font-semibold'>{grp?.groupName}</h1>
+                                                <p className='text-[#AAABAB] text-[14px]'>{(grp?.lastMessage?.sender == session?.user?.id ? "You" : "other") + ": " + grp?.lastMessage?.message}</p>
+                                            </div>
+
+                                            {/* <div className="absolute top-2 right-3 text-gray-600 text-[13px]"><p>{person?.msgtime}</p></div> */}
+                                            <div className="absolute top-2 right-3 text-gray-600 text-[13px]"><p>4:25</p></div>
+                                        </div>
+                                    ))
+                                )
+                            )
+                        }
+                    </div>
+                </div>
             </div>
 
             {

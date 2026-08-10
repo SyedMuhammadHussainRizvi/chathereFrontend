@@ -2,14 +2,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useParams, useSearchParams } from 'next/navigation'
-import { FaAngleLeft, FaMagnifyingGlass, FaPhone, FaVideo } from 'react-icons/fa6'
+import { FaAngleDown, FaAngleLeft, FaMagnifyingGlass, FaPhone, FaTrash, FaVideo } from 'react-icons/fa6'
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoVideocamOutline } from "react-icons/io5";
 import { BsEmojiSmile } from "react-icons/bs";
 import { IoMdAttach } from "react-icons/io";
 import { CiImageOn } from "react-icons/ci";
 import { IoIosSend } from "react-icons/io";
-import { getMessage, sendMessage } from '@/apiCall'
+import { deleteMess, getMessage, sendMessage } from '@/apiCall'
 import { toast, ToastContainer } from 'react-toastify'
 import { useSession } from 'next-auth/react'
 import { socket } from '@/lib/socket'
@@ -23,6 +23,8 @@ function chat() {
   const messageEndRef = useRef(null);
   const searchParams = useSearchParams()
   const [message, setMessage] = useState("")
+  const [OptionsDiv, setOptionsDiv] = useState(null)
+
   const myid = session?.user?.id
 
   const chatId = params._id;
@@ -44,10 +46,17 @@ function chat() {
   }, [])
 
   useEffect(() => {
-    
+
     socket.on("receiveMessage", (message) => {
       setchatMessages((prev) => [...prev, message])
     })
+
+    const handleReceiveDeletedMessage = (message) => {
+      setchatMessages((prev) => prev.filter(pre => pre._id != message._id));
+    };
+
+    socket.on("receiveDeletechatMessage", (handleReceiveDeletedMessage))
+
   }, [])
 
 
@@ -61,20 +70,31 @@ function chat() {
     }
 
     const response = await sendMessage(payload)
-    if(response.success){
-      socket.emit("sendMessage", response.saveMessage);  
+    if (response.success) {
+      socket.emit("sendMessage", response.saveMessage);
       setchatMessages((prev) => [...prev, response.saveMessage])
       setMessage("")
     }
   }
 
-  useEffect(()=>{
+  useEffect(() => {
 
     messageEndRef.current?.scrollIntoView({
-        behavior:"smooth"
+      behavior: "smooth"
     });
 
-},[chatMessages]);
+  }, [chatMessages]);
+
+  async function handleDelete(_id) {
+    const response = await deleteMess(_id)
+    if (response.success) {
+      toast.success("Message deleted successfully")
+      setchatMessages(chatMessages.filter(cm => cm._id != _id))
+      socket.emit("deletechatMessage", response.deleteMessage);
+      return
+    }
+    toast.error(response.message)
+  }
 
   return (
     <div className='w-full h-screen '>
@@ -82,7 +102,7 @@ function chat() {
       <div className="navbar w-full flex items-center justify-between px-3 lg:px-5 2xl:px-10  bg-[#161717] text-white h-[10vh]">
 
         <div className="flex gap-3 items-center">
-          <FaAngleLeft className='block sm:hidden text-[20px] hover:cursor-pointer ' onClick={()=>{router.push("/mainarea")}}/>
+          <FaAngleLeft className='block sm:hidden text-[20px] hover:cursor-pointer ' onClick={() => { router.push("/mainarea") }} />
           <img src={image} className='h-10 w-10 lg:h-10 lg:w-10 xl:h-13 xl:w-13 rounded-full' />
           <h1 className='sm:text-[17px] lg:text-[20px] 2xl:text-[25px] font-semibold'>{name}</h1>
         </div>
@@ -102,17 +122,35 @@ function chat() {
           {
             chatMessages?.map(mess => (
               <>
-                <div className={`w-full flex mt-3 ${mess?.sender == myid ? "justify-end" : "justify-start"}`}>
-                <div className={`px-3 py-2 flex gap-3  ${mess?.sender == myid ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
-                  <p className={`text-[20px] `}>{mess?.message}</p> 
-                  <div className=' flex items-end mt-3'><p className='text-[#AAABAB] '>{new Date(mess.createdAt).toLocaleTimeString([], {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true
-                  })}</p></div>
+                <div className={`relative w-full flex mt-3 ${mess?.sender == myid ? "justify-end" : "justify-start"}`}>
+                  <div className={`px-3 py-2 flex gap-3  ${mess?.sender == myid ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
+                    <p className={`text-[20px] `}>{mess?.message}</p>
+                    <div className={`items-end ${mess?.sender != (session?.user?.id) && "mt-3"}`}>
+                      {
+                        mess?.sender == (session?.user?.id) ?
+                          <div className="flex justify-end"><FaAngleDown onClick={() => setOptionsDiv(
+                            OptionsDiv === mess._id ? null : mess._id
+                          )} /></div>
+                          : ""
+                      }
+                      <p className='text-[#AAABAB] '>{new Date(mess.createdAt).toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true
+                      })}</p></div>
+                  </div>
+                  {
+                    OptionsDiv == mess._id && (
+                      <div className="absolute bottom-16 rounded-lg p-3 px-5 bg-[#161717]">
+                        <div className="flex items-center gap-3 rounded-lg p-2 text-white hover:text-red-400 hover:bg-red-200 hover:cursor-pointer" onClick={() => handleDelete(mess._id)}>
+                          <FaTrash />
+                          <p>Delete</p>
+                        </div>
+                      </div>
+                    )
+                  }
                 </div>
-              </div>
-              <div ref={messageEndRef}></div>
+                <div ref={messageEndRef}></div>
               </>
             ))
           }
@@ -122,7 +160,7 @@ function chat() {
           <div className="bg-[#2E2F2F] text-white w-full h-[6vh] lg:h-full xl:h-full 2xl:h-full flex justify-between rounded-full items-center px-5 text-[25px] sm:text-[30px] lg:text-[20px] 2xl:text-[30px]">
             <div className='flex gap-2 items-center'>
               <BsEmojiSmile />
-            <input type="text" className=' w-40 2xl:w-350 lg:w-170 sm:w-50 focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e)=>setMessage(e.target.value)}/>
+              <input type="text" className='flex-1 w-full focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e) => setMessage(e.target.value)} />
             </div>
             <div className="flex gap-5 items-center">
               <IoMdAttach />
