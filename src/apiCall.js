@@ -1,4 +1,4 @@
-const DOMAIN = "http://localhost:3000"
+const DOMAIN = "/api"
 
 export const addUser = async function(payload){
     const response = await fetch(`${DOMAIN}/api/signup`, {
@@ -10,12 +10,12 @@ export const addUser = async function(payload){
 }
 
 export const getChats = async function(_id){
-    const response = await fetch(`${DOMAIN}/api/chats/getChats/${_id}`)
+    const response = await fetch(`${DOMAIN}/chats/getChats/${_id}`)
     return response.json()
 }
 
 export const addChats = async function(payload){
-    const response = await fetch(`${DOMAIN}/api/chats/addchat`, {
+    const response = await fetch(`${DOMAIN}/chats/addchat`, {
         method: "POST",
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
@@ -24,12 +24,12 @@ export const addChats = async function(payload){
 }
 
 export const getMessage = async function(chatId){
-     const response = await fetch(`${DOMAIN}/api/message/getmessofchat/${chatId}`)
+     const response = await fetch(`${DOMAIN}/message/getmessofchat/${chatId}`)
     return response.json()
 }
 
 export const sendMessage = async function (payload){
-    const response = await fetch(`${DOMAIN}/api/message/addmess`, {
+    const response = await fetch(`${DOMAIN}/message/addmess`, {
         method: "POST",
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
@@ -38,17 +38,17 @@ export const sendMessage = async function (payload){
 }
 
 export const getGroups = async function(_id){
-    const response = await fetch(`${DOMAIN}/api/group/getgroups/${_id}`)
+    const response = await fetch(`${DOMAIN}/group/getgroups/${_id}`)
     return response.json()
 }
 
 export const getoneGroup = async function(_id){
-    const response = await fetch(`${DOMAIN}/api/group/getonegroup/${_id}`)
+    const response = await fetch(`${DOMAIN}/group/getonegroup/${_id}`)
     return response.json()
 }
 
 export const deleteMess = async function(_id){
-    const response = await fetch(`${DOMAIN}/api/message/deleteMessage/${_id}`, {
+    const response = await fetch(`${DOMAIN}/message/deleteMessage/${_id}`, {
         method: 'DELETE',
     })
     return response.json()
