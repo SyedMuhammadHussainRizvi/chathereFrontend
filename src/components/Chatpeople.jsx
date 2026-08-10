@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import ProcessButton from './ProcessButton'
-import { addChats, getChats, getGroups } from '@/apiCall'
+import { addChats, addGroup, getChats, getGroups } from '@/apiCall'
 import { signOut, useSession } from 'next-auth/react'
 import { toast, ToastContainer } from 'react-toastify'
 import { FaUserCircle } from 'react-icons/fa'
@@ -114,7 +114,27 @@ function Chatpeople() {
     }
 
     async function handleCreateGroup() {
+        if(groupName.trim()=="" || groupDescription.trim()=="" || groupMembers.length<=2){
+            toast.error("Please fill all fields")
+            return
+        }
         setbtnLoader(true)
+        const payload={
+          groupName: groupName,
+          groupDescription: groupDescription,
+          groupMembers: groupMembers,
+          lastMessage: "6a744d716c109ee6b3c76079"
+        }
+        
+        const response = await addGroup(payload)
+        if(response.success){
+            toast.success("Group has been created")
+            setbtnLoader(false)
+            return
+        }
+
+        toast.error(response.message)
+        setbtnLoader(false)
     }
     console.log(groupMembers)
     function handleSignOut() {
@@ -327,7 +347,7 @@ function Chatpeople() {
                                     loaderColor={"white"} loaderS={7}
                                     txtColor={"white"} txtSize={"[20px]"}
                                     loadingtxt={"Creating"} txt={"Create group"} isLoading={btnLoader}
-                                    Onclick={handleAddChat}
+                                    Onclick={handleCreateGroup}
                                 />
                             </div>
 

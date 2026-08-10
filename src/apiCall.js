@@ -47,6 +47,15 @@ export const getoneGroup = async function(_id){
     return response.json()
 }
 
+export const addGroup = async function(payload){
+     const response = await fetch(`${DOMAIN}/group/creategroup`, {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    })
+    return response.json()
+}
+
 export const deleteMess = async function(_id){
     const response = await fetch(`${DOMAIN}/message/deleteMessage/${_id}`, {
         method: 'DELETE',
