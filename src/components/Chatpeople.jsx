@@ -302,12 +302,12 @@ function Chatpeople() {
                                         <div className="w-full flex gap-3 items-center relative px-5 py-1 ">
 
                                             <input type="checkbox" className='h-6 w-6' style={{ accentColor: `#009C59` }}
-                                                checked={groupMembers.find(gm => gm.memId == person?._id) ? true : false}
+                                                checked={groupMembers.find(gm => gm.memId == person?.chatMembers[0]?._id) ? true : false}
                                                 onClick={() => {
                                                     const arr = [...groupMembers]
                                                     console.log(arr)
-                                                    arr?.find(aa => aa.memId == person?._id) ? setgroupMembers(arr?.filter(a => a?.memId != person?._id)) :
-                                                        setgroupMembers([...arr, { memId: person?._id, status: "user" }])
+                                                    arr?.find(aa => aa.memId == person?.chatMembers[0]?._id) ? setgroupMembers(arr?.filter(a => a?.memId != person?.chatMembers[0]?._id)) :
+                                                        setgroupMembers([...arr, { memId: person?.chatMembers[0]?._id, status: "user" }])
                                                 }}
                                             />
 

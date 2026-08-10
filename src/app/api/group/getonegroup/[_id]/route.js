@@ -2,6 +2,7 @@ import { connect } from "@/lib/mongodb";
 import Group from "@/models/Group";
 import { NextResponse } from "next/server";
 import messages from "@/models/messages";
+import User from "@/models/User";
 
 export async function GET(req, { params }) {
     try {
