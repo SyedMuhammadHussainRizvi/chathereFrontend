@@ -51,41 +51,55 @@ function group() {
     }, [])
 
     useEffect(() => {
-
-        socket.emit("joinGroup", (groupId))
+        socket.emit("joinGroup", groupId);
 
         const handleReceiveGroupMessage = (message) => {
             setgroupMessages((prev) => [...prev, message]);
         };
 
         const handleReceiveDeletedMessage = (message) => {
-            setgroupMessages((prev) => prev.filter(pre => pre._id != message._id));
+            setgroupMessages((prev) =>
+                prev.filter((pre) => pre._id !== message._id)
+            );
         };
 
-        socket.on("receiveGroupMessage", (handleReceiveGroupMessage));
-        socket.on("receiveDeletedMess", (handleReceiveDeletedMessage))
+        socket.on("receiveGroupMessage", handleReceiveGroupMessage);
+        socket.on("receiveDeletedMess", handleReceiveDeletedMessage);
 
         return () => {
-            socket.emit("leaveGroup", (groupId))
-        }
-
-    }, [])
+            socket.emit("leaveGroup", groupId);
+            socket.off("receiveGroupMessage", handleReceiveGroupMessage);
+            socket.off("receiveDeletedMess", handleReceiveDeletedMessage);
+        };
+    }, [groupId]);
 
     async function handleSendMessage() {
         const payload = {
             chatId: groupId,
             message: message,
             sender: session?.user?.id,
-            receiver: session?.user?.id
-        }
+            receiver: session?.user?.id,
+        };
 
-        const response = await sendMessage(payload)
+        const response = await sendMessage(payload);
+
         if (response.success) {
+            // Add your own message immediately
+            setgroupMessages((prev) => [
+                ...prev,
+                {
+                    ...response.saveMessage,
+                    senderName: session?.user?.name,
+                },
+            ]);
 
-            setgroupMessages((prev) => [...prev, response.saveMessage])
-            socket.emit("sendGroupMeessage", response.saveMessage);
-            console.log(groupMessages)
-            setMessage("")
+            // Send name through socket
+            socket.emit("sendGroupMeessage", {
+                ...response.saveMessage,
+                senderName: session?.user?.name,
+            });
+
+            setMessage("");
         }
     }
 
@@ -204,7 +218,10 @@ function group() {
                                 <div key={mess._id} className={`relative w-full flex mt-3 ${(mess?.sender?._id || mess?.sender) === (session?.user?.id) ? "justify-end" : "justify-start"}`}>
                                     <div className={`px-3 py-2 flex gap-3  ${(mess?.sender?._id || mess?.sender) == (session?.user?.id) ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
                                         <div>
-                                            <p className={`text-[17px] md:text-[20px] text-[#F9CD77]`}>{(mess?.sender?._id || mess?.sender) !== (session?.user?.id) && mess?.sender?.name}</p>
+                                            <p className={`text-[17px] md:text-[20px] text-[#F9CD77]`}>
+                                                {(mess?.sender?._id || mess?.sender) !== session?.user?.id &&
+                                                    (mess?.sender?.name || mess?.senderName)}
+                                            </p>
                                             <p className={`text-[15px] md:text-[20px]`}>{mess?.message}</p>
                                         </div>
                                         <div className={`items-end ${(mess?.sender?._id || mess?.sender) != (session?.user?.id) && "mt-3"}`}>
@@ -238,7 +255,7 @@ function group() {
                     }
                     {
                         istyping != "" && (
-                            <div className="bg-[#242626] px-2 py-3 rounded-lg mt-3 w-fit flex gap-3 items-center">                                
+                            <div className="bg-[#242626] px-2 py-3 rounded-lg mt-3 w-fit flex gap-3 items-center">
                                 <div className='mb-3 text-[#F9CD77]'>{istyping}</div>
                                 <div className="h-3 w-3 animate-bounce rounded-full bg-white"></div>
                                 <div className="h-3 w-3 animate-bounce rounded-full bg-white"></div>
@@ -252,7 +269,7 @@ function group() {
                     <div className="bg-[#2E2F2F] text-white w-full h-[6vh] lg:h-full xl:h-full 2xl:h-full flex justify-between rounded-full items-center px-5 text-[25px] sm:text-[30px] lg:text-[20px] 2xl:text-[30px]">
                         <div className='flex gap-2 items-center'>
                             <BsEmojiSmile />
-                            <input type="text" className=' flex-1 w-full focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e) => {handleTyping(e)}} />
+                            <input type="text" className=' flex-1 w-full focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e) => { handleTyping(e) }} />
                         </div>
                         <div className="flex gap-5 items-center">
                             <IoMdAttach />
