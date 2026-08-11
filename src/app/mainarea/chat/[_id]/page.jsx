@@ -25,6 +25,8 @@ function chat() {
   const [message, setMessage] = useState("")
   const [OptionsDiv, setOptionsDiv] = useState(null)
   const [isOnline, setisOnline] = useState(false)
+  const [istyping, setistyping] = useState(false)
+  const typingTimeout = useRef(null)
 
   const myid = session?.user?.id
 
@@ -75,7 +77,37 @@ function chat() {
 
   }, [])
 
+  useEffect(() => {
+    console.log("Socket connected:", socket.connected);
+    const handleUserTyping = ({ userId, chatid }) => {
+        if (
+            userId.toString() === myid?.toString() &&
+            chatid.toString() === chatId?.toString()
+        ) {
+            console.log(name+" is typing");
+            setistyping(true)
+          }else{
+            console.log("Do something else");
+          }
+        };
+        socket.on("userTyping", handleUserTyping);
 
+        const handleUsernotTyping = ({userId, chatid}) => {
+          if (
+            userId.toString() === myid?.toString() &&
+            chatid.toString() === chatId?.toString()
+          ){
+            setistyping(false)
+          }
+        }
+
+        socket.on("usernotTyping", handleUsernotTyping)
+
+    return () => {
+        socket.off("userTyping", handleUserTyping);
+        
+    };
+}, [memberId, chatId]);
 
   async function handleSendMessage() {
     const payload = {
@@ -99,7 +131,7 @@ function chat() {
       behavior: "smooth"
     });
 
-  }, [chatMessages]);
+  }, [chatMessages, istyping]);
 
   async function handleDelete(_id) {
     const response = await deleteMess(_id)
@@ -110,6 +142,25 @@ function chat() {
       return
     }
     toast.error(response.message)
+  }
+
+  function handleTyping(e){
+    setMessage(e.target.value)
+
+    socket.emit("typing", {
+      userId: memberId, 
+      chatid: chatId
+    })
+
+    clearTimeout(typingTimeout.current)
+
+    typingTimeout.current=setTimeout(()=>{
+      socket.emit("nottyping", {
+        userId: memberId,
+        chatid: chatId
+      })
+    }, 1000)
+
   }
 
   return (
@@ -141,12 +192,12 @@ function chat() {
           {
             chatMessages?.map(mess => (
               <>
-                <div className={`relative w-full flex mt-3 ${mess?.sender?._id == myid ? "justify-end" : "justify-start"}`}>
-                  <div className={`px-3 py-2 flex gap-3  ${mess?.sender?._id == myid ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
+                <div className={`relative w-full flex mt-3 ${(mess?.sender?._id || mess?.sender) === myid ? "justify-end" : "justify-start"}`}>
+                  <div className={`px-3 py-2 flex gap-3  ${(mess?.sender?._id || mess?.sender) === myid ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
                     <p className={`text-[20px] `}>{mess?.message}</p>
-                    <div className={`items-end ${mess?.sender?._id != (session?.user?.id) && "mt-3"}`}>
+                    <div className={`items-end ${(mess?.sender?._id || mess?.sender) != (session?.user?.id) && "mt-3"}`}>
                       {
-                        mess?.sender?._id == (session?.user?.id) ?
+                        (mess?.sender?._id || mess?.sender) == (session?.user?.id) ?
                           <div className="flex justify-end"><FaAngleDown onClick={() => setOptionsDiv(
                             OptionsDiv === mess._id ? null : mess._id
                           )} /></div>
@@ -173,13 +224,22 @@ function chat() {
               </>
             ))
           }
+          {
+            istyping && (
+              <div className="flex gap-3 bg-[#242626] px-2 py-4 rounded-lg mt-3 w-fit">
+                <div className="h-3 w-3 animate-bounce rounded-full bg-white"></div>
+                <div className="h-3 w-3 animate-bounce rounded-full bg-white"></div>
+                <div className="h-3 w-3 animate-bounce rounded-full bg-white"></div>
+              </div>
+            )
+          }
         </div>
 
         <div className="typearea h-[7vh] flex justify-center items-center ">
           <div className="bg-[#2E2F2F] text-white w-full h-[6vh] lg:h-full xl:h-full 2xl:h-full flex justify-between rounded-full items-center px-5 text-[25px] sm:text-[30px] lg:text-[20px] 2xl:text-[30px]">
             <div className='flex gap-2 items-center'>
               <BsEmojiSmile />
-              <input type="text" className='flex-1 w-full focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e) => setMessage(e.target.value)} />
+              <input type="text" className='flex-1 w-full focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e) => {handleTyping(e)}} />
             </div>
             <div className="flex gap-5 items-center">
               <IoMdAttach />

@@ -24,6 +24,8 @@ function group() {
     const [groupMessages, setgroupMessages] = useState([])
     const [OptionsDiv, setOptionsDiv] = useState(null)
     const [groupInfo, setgroupInfo] = useState(false)
+    const [istyping, setistyping] = useState("")
+    const typingTimeout = useRef(null)
 
 
     async function fetchgroup() {
@@ -79,8 +81,10 @@ function group() {
 
         const response = await sendMessage(payload)
         if (response.success) {
-            socket.emit("sendGroupMeessage", response.saveMessage);
+
             setgroupMessages((prev) => [...prev, response.saveMessage])
+            socket.emit("sendGroupMeessage", response.saveMessage);
+            console.log(groupMessages)
             setMessage("")
         }
     }
@@ -91,7 +95,7 @@ function group() {
             behavior: "smooth"
         });
 
-    }, [groupMessages]);
+    }, [groupMessages, istyping]);
 
     async function handleDelete(_id) {
         const response = await deleteMess(_id)
@@ -104,6 +108,58 @@ function group() {
         toast.error(response.message)
     }
 
+    useEffect(() => {
+        console.log("Socket connected:", socket.connected);
+
+        const handleUserTyping = ({ userName, chatid }) => {
+            console.log("I am here")
+            if (
+                chatid.toString() === groupId?.toString()
+            ) {
+                console.log(userName)
+                setistyping(userName)
+            } else {
+                console.log("Do something else");
+            }
+        };
+
+        socket.on("userTypingGroup", handleUserTyping);
+
+        const handleUsernotTyping = ({ userName, chatid }) => {
+            if (
+                chatid.toString() === groupId?.toString()
+            ) {
+                setistyping("")
+            }
+        }
+
+        socket.on("usernotTypingGroup", handleUsernotTyping)
+
+        return () => {
+            socket.off("userTypingGroup", handleUserTyping);
+
+        };
+    }, [groupId]);
+
+
+    function handleTyping(e) {
+        setMessage(e.target.value)
+
+        socket.emit("typingGroup", {
+            userName: session?.user?.name,
+            chatid: groupId
+        })
+
+        clearTimeout(typingTimeout.current)
+
+        typingTimeout.current = setTimeout(() => {
+            socket.emit("nottypingGroup", {
+                userName: session?.user?.name,
+                chatid: groupId
+            })
+        }, 1000)
+
+    }
 
 
     return (
@@ -112,7 +168,7 @@ function group() {
             <div className="navbar w-full flex items-center justify-between px-3 lg:px-5 2xl:px-10  bg-[#161717] text-white h-[10vh]">
 
                 <div className="flex gap-3 items-center hover:cursor-pointer" onClick={() => setgroupInfo(true)}>
-                    <FaAngleLeft className='block sm:hidden text-[20px] hover:cursor-pointer ' onClick={(e) => {e.stopPropagation(); router.push("/mainarea") }} />
+                    <FaAngleLeft className='block sm:hidden text-[20px] hover:cursor-pointer ' onClick={(e) => { e.stopPropagation(); router.push("/mainarea") }} />
                     <img src={groupDetails?.groupImage} className='h-10 w-10 lg:h-10 lg:w-10 xl:h-13 xl:w-13 rounded-full' />
                     <div>
                         <h1 className='sm:text-[17px] lg:text-[20px] 2xl:text-[25px] font-semibold'>{groupDetails?.groupName}</h1>
@@ -145,15 +201,15 @@ function group() {
                     {
                         groupMessages?.map(mess => (
                             <>
-                                <div key={mess._id} className={`relative w-full flex mt-3 ${mess?.sender?._id == (session?.user?.id) ? "justify-end" : "justify-start"}`}>
-                                    <div className={`px-3 py-2 flex gap-3  ${mess?.sender?._id == (session?.user?.id) ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
+                                <div key={mess._id} className={`relative w-full flex mt-3 ${(mess?.sender?._id || mess?.sender) === (session?.user?.id) ? "justify-end" : "justify-start"}`}>
+                                    <div className={`px-3 py-2 flex gap-3  ${(mess?.sender?._id || mess?.sender) == (session?.user?.id) ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
                                         <div>
-                                            <p className={`text-[17px] md:text-[20px] text-[#F9CD77]`}>{mess?.sender?._id !== (session?.user?.id) && mess?.sender?.name}</p>
+                                            <p className={`text-[17px] md:text-[20px] text-[#F9CD77]`}>{(mess?.sender?._id || mess?.sender) !== (session?.user?.id) && mess?.sender?.name}</p>
                                             <p className={`text-[15px] md:text-[20px]`}>{mess?.message}</p>
                                         </div>
-                                        <div className={`items-end ${mess?.sender?._id != (session?.user?.id) && "mt-3"}`}>
+                                        <div className={`items-end ${(mess?.sender?._id || mess?.sender) != (session?.user?.id) && "mt-3"}`}>
                                             {
-                                                mess?.sender?._id == (session?.user?.id) ?
+                                                (mess?.sender?._id || mess?.sender) == (session?.user?.id) ?
                                                     <div className="flex justify-end"><FaAngleDown onClick={() => setOptionsDiv(
                                                         OptionsDiv === mess._id ? null : mess._id
                                                     )} /></div>
@@ -180,13 +236,23 @@ function group() {
                             </>
                         ))
                     }
+                    {
+                        istyping != "" && (
+                            <div className="bg-[#242626] px-2 py-3 rounded-lg mt-3 w-fit flex gap-3 items-center">                                
+                                <div className='mb-3 text-[#F9CD77]'>{istyping}</div>
+                                <div className="h-3 w-3 animate-bounce rounded-full bg-white"></div>
+                                <div className="h-3 w-3 animate-bounce rounded-full bg-white"></div>
+                                <div className="h-3 w-3 animate-bounce rounded-full bg-white"></div>
+                            </div>
+                        )
+                    }
                 </div>
 
                 <div className="typearea h-[7vh] flex justify-center items-center ">
                     <div className="bg-[#2E2F2F] text-white w-full h-[6vh] lg:h-full xl:h-full 2xl:h-full flex justify-between rounded-full items-center px-5 text-[25px] sm:text-[30px] lg:text-[20px] 2xl:text-[30px]">
                         <div className='flex gap-2 items-center'>
                             <BsEmojiSmile />
-                            <input type="text" className=' flex-1 w-full focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e) => setMessage(e.target.value)} />
+                            <input type="text" className=' flex-1 w-full focus:outline-none px-3 text-[18px]' placeholder='Type message...' value={message} onChange={(e) => {handleTyping(e)}} />
                         </div>
                         <div className="flex gap-5 items-center">
                             <IoMdAttach />
@@ -208,13 +274,13 @@ function group() {
                             {
                                 groupDetails?.groupMembers?.map(gd => (
                                     <div className="flex items-center gap-3 mt-5">
-                                        <img src="/images/profile.png" alt="" className='h-10 w-10 rounded-full'/>
+                                        <img src="/images/profile.png" alt="" className='h-10 w-10 rounded-full' />
                                         <p>{gd?.memId?.name}</p>
                                     </div>
-                                    
+
                                 ))
                             }
-                            
+
                         </div>
                     )
                 }
