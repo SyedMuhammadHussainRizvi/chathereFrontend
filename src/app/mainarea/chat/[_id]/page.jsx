@@ -194,7 +194,7 @@ function chat() {
               <>
                 <div className={`relative w-full flex mt-3 ${(mess?.sender?._id || mess?.sender) === myid ? "justify-end" : "justify-start"}`}>
                   <div className={`px-3 py-2 flex gap-3  ${(mess?.sender?._id || mess?.sender) === myid ? "bg-[#144D37]" : "bg-[#242626]"} text-white rounded-lg rounded-b-r-none`}>
-                    <p className={`text-[20px] `}>{mess?.message}</p>
+                    <p className={`text-[17px] md:text-[20px] `}>{mess?.message}</p>
                     <div className={`items-end ${(mess?.sender?._id || mess?.sender) != (session?.user?.id) && "mt-3"}`}>
                       {
                         (mess?.sender?._id || mess?.sender) == (session?.user?.id) ?
